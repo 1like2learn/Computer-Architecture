@@ -11,9 +11,13 @@ class CPU:
         self.reg = [0] * 8
         self.pc = 0
         self.branchTable = {
-            0b10000010: self.LDI, 
-            0b01000111: self.PRN, 
-            0b10100010: self.alu
+            0b10000010: self.ldi, 
+            0b01000111: self.prn, 
+            0b10100010: self.mul,
+            0b01000101: self.push,
+            0b01000110: self.pop,
+            0b01010000: self.call,
+            0b00010001: self.ret
 
         }
 
@@ -23,29 +27,31 @@ class CPU:
         address = 0
         program = []
 
-
+        """
+        Open a the provided file. Check if the current line is a 
+        comment or empty line. If it's not take the first 8 indices 
+        and type cast them as a binary number.
+        """
         f = open(openFile, "r")
         for line in f:
             if len(line) < 2 or line[0] == "#":
                 continue
             program.append(int(line[:8], base = 2))
         f.close()
-
-        # program = [
-        #     # From print8.ls8
-        #     0b10000010, # LDI R0,8
-        #     0b00000000,
-        #     0b00001000,
-        #     0b01000111, # PRN R0
-        #     0b00000000,
-        #     0b00000001, # HLT
-        # ]
-
+        
+        """
+        Add each line to the program list.
+        """
         for instruction in program:
+            # print('instruction: ', instruction)
             self.ram_write(address, instruction)
             address += 1
 
+    """ Function that call's alu as a multiplication operation. """
+    def mul(self, operand_a, operand_b):
+        return self.alu("MUL", operand_a, operand_b)
 
+    """ Function that does mathematical operations. """
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
@@ -56,11 +62,12 @@ class CPU:
             self.reg[reg_a] *=  self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
-        return 3
 
+    """ Method to read ram """
     def ram_read(self, pointer):
         return self.ram[pointer]
 
+    """ Method to write to ram """
     def ram_write(self, pointer, value):
         if pointer >= 0 or pointer < 8:
             self.ram[pointer] = value
@@ -86,29 +93,67 @@ class CPU:
             print(" %02X" % self.reg[i], end='')
 
         print()
-    def LDI(self, operand_a, operand_b):
+
+    """ Removes the current item from the stack and stores it in the provided register """
+    def pop(self, operand_a, operand_b):
+        if self.reg[7] == 0 or self.reg[7] == 0xf3:
+            print("There is nothing in the stack to remove")
+        self.reg[7] += 1
+        value = self.ram_read(self.reg[7])
+        self.reg[operand_a] = value
+
+    """ Adds a value onto the stack from the provided register """
+    def push(self, operand_a, operand_b):
+        if self.reg[7] == 0:
+            self.reg[7] = 0xf3
+        self.ram_write(self.reg[7], self.reg[operand_a])
+        self.reg[7] -= 1
+
+    """ Set's the PC as the last element in the stack """
+    def ret(self, operand_a, operand_b):
+        self.pc = self.ram_read(self.reg[7])
+        self.reg[7] +=1
+    """ Set's the PC as the value provided and stores the old PC on the stack """
+    def call(self, operand_a, operand_b):
+        self.push(self.pc + 1, operand_b)
+        self.pc = operand_a
+
+
+    """ Stores a value in the register """
+    def ldi(self, operand_a, operand_b):
         self.reg[operand_a] = operand_b
-        return 3
-    def PRN(self, operand_a, operand_b):
+
+    """ Prints a value in the register """
+    def prn(self, operand_a, operand_b):
         # location = self.ram_read(operand_a)
         print(self.reg[operand_a])
-        return 2
 
     def run(self):
         """Run the CPU."""
         HLT = 0b00000001 # 1
         halt = False
+
         while not halt:
-            IR = self.ram[self.pc] # Instruction register
+            # self.trace()
+            ir = self.ram[self.pc] # Instruction register
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
 
-            if IR == HLT:
+            if ir == HLT:
                 halt = True
-                self.pc +=1
             else:
-                self.pc += self.branchTable[IR](operand_a, operand_b)
+                """
+                If the command is not HLT use run the function in 
+                the branchtable with the key being the current instruction. 
+                """
 
-                
+                print('self.pc: ', self.pc)
+                print('ir: ', ir)
+                self.branchTable[ir](operand_a, operand_b)
 
-
+            """
+            Increment the PC commensurate to the value of the first two 
+            digits in the instruction plus one
+            """
+            instruction_len = (ir >> 6) + 1
+            self.pc += instruction_len

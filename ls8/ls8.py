@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-openFile = "examples/print8.ls8"
+# openFile = "examples/print8.ls8"
 # openFile = "examples/call.ls8"
 # openFile = "examples/interrupts.ls8"
 # openFile = "examples/keyboard.ls8"
@@ -17,5 +17,6 @@ from cpu import *
 
 cpu = CPU()
 
-cpu.load(openFile)
+cpu.load(sys.argv[1])
+# cpu.load(openFile)
 cpu.run()
