@@ -10,27 +10,39 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
+        self.branchTable = {
+            0b10000010: self.LDI, 
+            0b01000111: self.PRN, 
+            0b10100010: self.alu
 
-    def load(self):
+        }
+
+    def load(self, openFile):
         """Load a program into memory."""
 
         address = 0
+        program = []
 
-        # For now, we've just hardcoded a program:
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+        f = open(openFile, "r")
+        for line in f:
+            if len(line) < 2 or line[0] == "#":
+                continue
+            program.append(int(line[:8], base = 2))
+        f.close()
+
+        # program = [
+        #     # From print8.ls8
+        #     0b10000010, # LDI R0,8
+        #     0b00000000,
+        #     0b00001000,
+        #     0b01000111, # PRN R0
+        #     0b00000000,
+        #     0b00000001, # HLT
+        # ]
 
         for instruction in program:
-            print('instruction: ', instruction)
-            self.ram[address] = instruction
+            self.ram_write(address, instruction)
             address += 1
 
 
@@ -40,8 +52,11 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         #elif op == "SUB": etc
+        elif op == "MUL":
+            self.reg[reg_a] *=  self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
+        return 3
 
     def ram_read(self, pointer):
         return self.ram[pointer]
@@ -49,7 +64,6 @@ class CPU:
     def ram_write(self, pointer, value):
         if pointer >= 0 or pointer < 8:
             self.ram[pointer] = value
-            print('value: ', value)
         else:
             print(f'There is no memory location at {pointer}')
 
@@ -72,26 +86,29 @@ class CPU:
             print(" %02X" % self.reg[i], end='')
 
         print()
+    def LDI(self, operand_a, operand_b):
+        self.reg[operand_a] = operand_b
+        return 3
+    def PRN(self, operand_a, operand_b):
+        # location = self.ram_read(operand_a)
+        print(self.reg[operand_a])
+        return 2
 
     def run(self):
         """Run the CPU."""
         HLT = 0b00000001 # 1
-        LDI = 0b10000010 # 130
-        PRN = 0b01000111 # 71
         halt = False
         while not halt:
-            instruction = self.ram[self.pc]
-            if instruction == HLT:
+            IR = self.ram[self.pc] # Instruction register
+            operand_a = self.ram_read(self.pc + 1)
+            operand_b = self.ram_read(self.pc + 2)
+
+            if IR == HLT:
                 halt = True
                 self.pc +=1
-            elif instruction == LDI:
-                location = self.ram[self.pc + 1]
-                value = self.ram[self.pc + 2]
-                self.reg[location] = value
-                self.pc += 3
-            elif instruction == PRN:
-                location = self.ram[instruction + 1]
-                print(self.reg[location])
-                self.pc += 2
+            else:
+                self.pc += self.branchTable[IR](operand_a, operand_b)
+
+                
 
 
