@@ -13,12 +13,12 @@ class CPU:
         self.branchTable = {
             0b10000010: self.ldi, 
             0b01000111: self.prn, 
-            0b10100010: self.mul,
+            0b10100010: lambda opA, opB: self.alu("MULT", opA, opB),
             0b01000101: self.push,
             0b01000110: self.pop,
             0b01010000: self.call,
-            0b00010001: self.ret
-
+            0b00010001: self.ret,
+            0b10100000: lambda opA, opB: self.alu("ADD", opA, opB),
         }
 
     def load(self, openFile):
@@ -47,10 +47,6 @@ class CPU:
             self.ram_write(address, instruction)
             address += 1
 
-    """ Function that call's alu as a multiplication operation. """
-    def mul(self, operand_a, operand_b):
-        return self.alu("MUL", operand_a, operand_b)
-
     """ Function that does mathematical operations. """
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -69,10 +65,7 @@ class CPU:
 
     """ Method to write to ram """
     def ram_write(self, pointer, value):
-        if pointer >= 0 or pointer < 8:
-            self.ram[pointer] = value
-        else:
-            print(f'There is no memory location at {pointer}')
+        self.ram[pointer] = value
 
     def trace(self):
         """
@@ -106,17 +99,21 @@ class CPU:
     def push(self, operand_a, operand_b):
         if self.reg[7] == 0:
             self.reg[7] = 0xf3
-        self.ram_write(self.reg[7], self.reg[operand_a])
+        # print('self.reg[7]: ', self.reg[7])
+        self.ram_write(self.reg[7], operand_a)
         self.reg[7] -= 1
 
     """ Set's the PC as the last element in the stack """
     def ret(self, operand_a, operand_b):
-        self.pc = self.ram_read(self.reg[7])
         self.reg[7] +=1
+        self.pc = self.ram_read(self.reg[7])
+        # print('self.reg[7]: ', self.reg[7])
+        # print(self.ram[240:245])
+
     """ Set's the PC as the value provided and stores the old PC on the stack """
     def call(self, operand_a, operand_b):
         self.push(self.pc + 1, operand_b)
-        self.pc = operand_a
+        self.pc = self.reg[operand_a]
 
 
     """ Stores a value in the register """
@@ -146,14 +143,12 @@ class CPU:
                 If the command is not HLT use run the function in 
                 the branchtable with the key being the current instruction. 
                 """
-
-                print('self.pc: ', self.pc)
-                print('ir: ', ir)
                 self.branchTable[ir](operand_a, operand_b)
 
             """
             Increment the PC commensurate to the value of the first two 
             digits in the instruction plus one
             """
-            instruction_len = (ir >> 6) + 1
-            self.pc += instruction_len
+            if ir != 0b01010000:
+                instruction_len = (ir >> 6) + 1
+                self.pc += instruction_len
