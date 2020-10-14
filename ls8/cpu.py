@@ -8,8 +8,9 @@ class CPU:
     def __init__(self):
         """Construct a new CPU."""
         self.ram = [0] * 256
-        self.reg = [0] * 8
+        self.reg = [0,0,0,0,0,0,0,0xf4]
         self.pc = 0
+        self.fl = 0
         self.branchTable = {
             0b10000010: self.ldi, 
             0b01000111: self.prn, 
@@ -19,6 +20,7 @@ class CPU:
             0b01010000: self.call,
             0b00010001: self.ret,
             0b10100000: lambda opA, opB: self.alu("ADD", opA, opB),
+            0b10000100: self.st,
         }
 
     def load(self, openFile):
@@ -86,7 +88,13 @@ class CPU:
             print(" %02X" % self.reg[i], end='')
 
         print()
-
+    def handleFlagChange(self):
+        if self.reg[0] > self.reg[1]:
+            self.fl = 4
+        elif self.reg[0] > self.reg[1]:
+            self.fl = 2
+        else:
+            self.fl = 1
     """ Removes the current item from the stack and stores it in the provided register """
     def pop(self, operand_a, operand_b):
         if self.reg[7] == 0 or self.reg[7] == 0xf3:
@@ -115,6 +123,11 @@ class CPU:
         self.push(self.pc + 1, operand_b)
         self.pc = self.reg[operand_a]
 
+    """ Swaps values in registers """
+    def st(self, regA, regB):
+        valueA = self.reg[regA]
+        self.reg[regA] = self.reg[regB]
+        self.reg[regB] = valueA
 
     """ Stores a value in the register """
     def ldi(self, operand_a, operand_b):
@@ -131,7 +144,7 @@ class CPU:
         halt = False
 
         while not halt:
-            # self.trace()
+            self.trace()
             ir = self.ram[self.pc] # Instruction register
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
@@ -149,6 +162,6 @@ class CPU:
             Increment the PC commensurate to the value of the first two 
             digits in the instruction plus one
             """
-            if ir != 0b01010000:
+            if (ir & 0b00010000) >> 4 == 0:
                 instruction_len = (ir >> 6) + 1
                 self.pc += instruction_len
