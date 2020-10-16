@@ -13,6 +13,8 @@ class CpuAlu(CpuBase):
             self.reg[reg_a] -= self.reg[reg_b]
         def mul():
             self.reg[reg_a] *=  self.reg[reg_b]
+        def inc():
+            self.reg[reg_a] += 1
         def comp():
             if self.reg[0] > self.reg[1]:
                 self.fl = 4
@@ -25,6 +27,7 @@ class CpuAlu(CpuBase):
             "SUB": sub,
             "MUL": mul,
             "CMP": comp,
+            "INC": inc
         }
         if op not in switchTable:
             raise Exception("Unsupported ALU operation")

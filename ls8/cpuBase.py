@@ -16,16 +16,52 @@ class CpuBase:
 
     """ Removes the current item from the stack and stores it in the provided register """
     def pop(self, opA, opB):
-        if self.reg[7] == 0 or self.reg[7] == 0xf3:
-            print("There is nothing in the stack to remove")
-        self.reg[7] += 1
+        # print('self.reg[7]: ', self.reg[7])
         value = self.ram_read(self.reg[7])
         self.reg[opA] = value
+        self.reg[7] += 1
 
     """ Adds a value onto the stack from the provided register """
     def push(self, opA, opB):
-        if self.reg[7] == 0:
-            self.reg[7] = 0xf3
-        # print('self.reg[7]: ', self.reg[7])
-        self.ram_write(self.reg[7], opA)
+        print('opA: ', opA)
         self.reg[7] -= 1
+        self.ram_write(self.reg[7], self.reg[opA])
+
+    """ Set's the PC as the last element in the stack """
+    def ret(self, opA, opB):
+        self.pc = self.ram_read(self.reg[7])
+        self.reg[7] += 1
+
+    """ Set's the PC as the value provided and stores the old PC on the stack """
+    def call(self, opA, opB):
+        self.reg[7] -= 1
+        self.ram_write(self.reg[7], self.pc + 2)
+        self.pc = self.reg[opA]
+
+    """ Stores value in memory """
+    def st(self, regA, regB):
+        self.ram_write(self.reg[regA], self.reg[regB])
+    
+    def jmp(self, opA, opB):
+        self.pc = self.reg[opA]
+    
+    def jlt(self, opA, opB):
+        if self.fl == 4:
+            self.pc = self.reg[opA]
+        else:
+            self.pc += 2
+    
+    def jeq(self, opA, opB):
+        if self.fl == 1:
+            self.pc = self.reg[opA]
+        else:
+            self.pc += 2
+
+    def jne(self, opA, opB):
+        if (self.fl & 0b1111110) == 0:
+            self.pc = self.reg[opA]
+        else:
+            self.pc += 2
+
+    def pra(self, opA, opB):
+        print(chr(self.reg[opA]), end = "", flush=True)
