@@ -355,7 +355,7 @@ Add interrupts to the LS-8 emulator.
 
 **You must have implemented a CPU stack before doing this.**
 
-**You must have implmented the `ST` instruction before doing this.**
+**You must have implemented the `ST` instruction before doing this.**
 
 See the [LS-8
 spec](https://github.com/LambdaSchool/Computer-Architecture-One/blob/master/LS8-SPEC.md)
@@ -368,10 +368,10 @@ iteration of the main loop and checking to see if one second has elapsed.
 When the timer is ready to fire, set bit 0 of the IS register (R6).
 
 Later in the main instruction loop, you'll check to see if bit 0 of the
-IS register is set, and if it is, you'll push the registers on the
-stack, look up the interrupt handler address in the interrupt vector
-table at address `0xF8`, and set the PC to it. Execution continues in
-the interrupt handler.
+`IS` register is set, and if it is, you'll push the registers on the
+stack, look up the interrupt handler address in the 'interrupt vector
+table'(F8 - FF) at address `0xF8`, and set the PC to it. Execution continues in
+the `interruption handler`.
 
 Then when an `IRET` instruction is found, the registers and PC are
 popped off the stack and execution continues normally.
