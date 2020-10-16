@@ -58,10 +58,18 @@ class CpuBase:
             self.pc += 2
 
     def jne(self, opA, opB):
-        if (self.fl & 0b1111110) == 0:
+        if (self.fl & 0b00000001) == 0:
             self.pc = self.reg[opA]
         else:
             self.pc += 2
 
     def pra(self, opA, opB):
         print(chr(self.reg[opA]), end = "", flush=True)
+
+    """ Stores a value in the register """
+    def ldi(self, opA, opB):
+        self.reg[opA] = opB
+
+    """ Prints a value in the register """
+    def prn(self, opA, opB):
+        print(self.reg[opA])

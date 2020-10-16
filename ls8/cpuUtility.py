@@ -35,25 +35,16 @@ class CpuUtility(CpuBase):
             from run() if you need help debugging.
             """
 
-            print(f"TRACE: %02X | %02X %02X %02X |" % (
+            print(f"TRACE: %02X %02X | %02X %02X %02X |" % (
                 self.pc,
-                #self.fl,
+                self.fl,
                 #self.ie,
                 self.ram_read(self.pc),
                 self.ram_read(self.pc + 1),
-                self.ram_read(self.pc + 2)
+                self.ram_read(self.pc + 2),
             ), end='')
 
             for i in range(8):
                 print(" %02X" % self.reg[i], end='')
 
             print()
-
-    """ Stores a value in the register """
-    def ldi(self, opA, opB):
-        self.reg[opA] = opB
-
-    """ Prints a value in the register """
-    def prn(self, opA, opB):
-        # location = self.ram_read(operand_a)
-        print(self.reg[opA])

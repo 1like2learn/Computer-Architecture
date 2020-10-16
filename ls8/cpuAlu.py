@@ -16,9 +16,9 @@ class CpuAlu(CpuBase):
         def inc():
             self.reg[reg_a] += 1
         def comp():
-            if self.reg[0] > self.reg[1]:
+            if self.reg[reg_a] < self.reg[reg_b]:
                 self.fl = 4
-            elif self.reg[0] > self.reg[1]:
+            elif self.reg[reg_a] > self.reg[reg_b]:
                 self.fl = 2
             else:
                 self.fl = 1
