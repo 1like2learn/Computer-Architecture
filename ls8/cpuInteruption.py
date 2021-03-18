@@ -8,6 +8,7 @@ class CpuInteruption(CpuUtility):
         super().__init__()
 
     def interupt(self, mi):
+        self.ie = False
         self.reg[7] -= 1
         self.ram_write(self.reg[7], self.pc)
         self.reg[7] -= 1
@@ -33,6 +34,7 @@ class CpuInteruption(CpuUtility):
         self.pc = self.ram_read(self.reg[7])
         self.reg[7] += 1
         self.reg[6] = 0
+        self.ie = True
 
     """ Add a interrupt bit to R6 """
     def intr(self, opA, opB):
