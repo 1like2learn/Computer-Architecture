@@ -5,6 +5,8 @@ class CpuBase:
         self.reg = [0,0,0,0,0,0,0,0xf4]
         self.pc = 0
         self.fl = 0
+        self.ie = True
+        self.halt = False
     
     """ Method to read ram """
     def ram_read(self, pointer):
@@ -23,7 +25,6 @@ class CpuBase:
 
     """ Adds a value onto the stack from the provided register """
     def push(self, opA, opB):
-        print('opA: ', opA)
         self.reg[7] -= 1
         self.ram_write(self.reg[7], self.reg[opA])
 
@@ -50,6 +51,24 @@ class CpuBase:
             self.pc = self.reg[opA]
         else:
             self.pc += 2
+
+    def jle(self, opA, opB):
+        if self.fl == 4 or self.fl == 1:
+            self.pc = self.reg[opA]
+        else:
+            self.pc += 2
+
+    def jgt(self, opA, opB):
+        if self.fl == 2:
+            self.pc = self.reg[opA]
+        else:
+            self.pc += 2
+
+    def jge(self, opA, opB):
+        if self.fl == 2 or self.fl == 1:
+            self.pc = self.reg[opA]
+        else:
+            self.pc += 2
     
     def jeq(self, opA, opB):
         if self.fl == 1:
@@ -73,3 +92,9 @@ class CpuBase:
     """ Prints a value in the register """
     def prn(self, opA, opB):
         print(self.reg[opA])
+    
+    def ld(self, opA, opB):
+        self.reg[opA] = self.ram_read(self.reg[opB])
+
+    def hlt(self, opA, opB):
+        self.halt = True
